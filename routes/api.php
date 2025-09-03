@@ -7,6 +7,7 @@ use App\Http\Controllers\HotelController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\RoomTypeController;
+use App\Http\Controllers\RoomController;
 
 // Public routes
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -28,6 +29,11 @@ Route::get('/room-types', [RoomTypeController::class, 'getAllRoomTypes']);
 Route::get('/room-types/search', [RoomTypeController::class, 'searchRoomTypes']);
 Route::get('/room-types/{roomTypeId}', [RoomTypeController::class, 'getRoomType']);
 Route::get('/hotels/{hotelId}/room-types', [RoomTypeController::class, 'getHotelRoomTypes']);
+
+// Room routes (public for now)
+Route::get('/rooms/{roomId}', [RoomController::class, 'getRoom']);
+Route::get('/room-types/{roomTypeId}/rooms', [RoomController::class, 'getRoomsByType']);
+Route::get('/room-types/{roomTypeId}/stats', [RoomController::class, 'getRoomTypeStats']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -54,4 +60,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/hotels/{hotelId}/room-types', [RoomTypeController::class, 'createRoomType']);
     Route::put('/room-types/{roomTypeId}', [RoomTypeController::class, 'updateRoomType']);
     Route::delete('/room-types/{roomTypeId}', [RoomTypeController::class, 'deleteRoomType']);
+    
+    // Room management routes (protected)
+    Route::post('/room-types/{roomTypeId}/rooms', [RoomController::class, 'createRoom']);
+    Route::post('/room-types/{roomTypeId}/rooms/bulk', [RoomController::class, 'bulkCreateRooms']);
+    Route::put('/rooms/{roomId}', [RoomController::class, 'updateRoom']);
+    Route::delete('/rooms/{roomId}', [RoomController::class, 'deleteRoom']);
 });
