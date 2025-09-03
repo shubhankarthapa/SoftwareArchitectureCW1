@@ -59,6 +59,9 @@ return [
 
     'logs_service' => [
         'url' => env('LOGS_SERVICE_URL', 'http://127.0.0.1:8001/api/logs'),
+        'cache_enabled' => env('LOGS_CACHE_ENABLED', true),
+        'cache_ttl' => env('LOGS_CACHE_TTL', 300), // 5 minutes in seconds
+        'cache_driver' => env('LOGS_CACHE_DRIVER', 'database'), // database, file, array
     ],
 
 ];

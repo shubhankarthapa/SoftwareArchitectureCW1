@@ -53,6 +53,12 @@ Route::get('/logs/application/{applicationName}', [LogsController::class, 'getLo
 Route::get('/logs/level/{level}', [LogsController::class, 'getLogsByLevel']);
 Route::get('/logs/user/{userId}', [LogsController::class, 'getLogsByUser']);
 
+// Cache management routes (public for now)
+Route::get('/logs/cache/stats', [LogsController::class, 'getCacheStats']);
+Route::post('/logs/cache/clear', [LogsController::class, 'clearCache']);
+Route::post('/logs/cache/invalidate', [LogsController::class, 'invalidateCache']);
+Route::post('/logs/refresh', [LogsController::class, 'refreshLogs']);
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     // Auth routes

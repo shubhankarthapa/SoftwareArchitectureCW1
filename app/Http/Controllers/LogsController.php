@@ -288,4 +288,100 @@ class LogsController extends Controller
             ], $result['status'] ?? 500);
         }
     }
+
+    /**
+     * Get cache statistics
+     */
+    public function getCacheStats(): JsonResponse
+    {
+        $stats = $this->loggingService->getCacheStats();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Cache statistics fetched successfully',
+            'data' => $stats
+        ]);
+    }
+
+    /**
+     * Clear all logs cache
+     */
+    public function clearCache(): JsonResponse
+    {
+        $this->loggingService->clearAllLogsCache();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Logs cache cleared successfully'
+        ]);
+    }
+
+    /**
+     * Invalidate cache for specific filters
+     */
+    public function invalidateCache(Request $request): JsonResponse
+    {
+        $filters = $request->only([
+            'application_name',
+            'level',
+            'user_id',
+            'source',
+            'date_from',
+            'date_to'
+        ]);
+
+        // Remove empty filters
+        $filters = array_filter($filters, function($value) {
+            return $value !== null && $value !== '';
+        });
+
+        $this->loggingService->invalidateCacheByFilters($filters);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Cache invalidated successfully',
+            'filters' => $filters
+        ]);
+    }
+
+    /**
+     * Force refresh logs (bypass cache)
+     */
+    public function refreshLogs(Request $request): JsonResponse
+    {
+        $filters = $request->only([
+            'application_name',
+            'level',
+            'user_id',
+            'source',
+            'date_from',
+            'date_to',
+            'page',
+            'per_page'
+        ]);
+
+        // Remove empty filters
+        $filters = array_filter($filters, function($value) {
+            return $value !== null && $value !== '';
+        });
+
+        // Temporarily disable cache for this request
+        $this->loggingService->setCacheEnabled(false);
+        $result = $this->loggingService->fetchLogs($filters);
+        $this->loggingService->setCacheEnabled(true);
+
+        if ($result['success']) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Logs refreshed successfully (cache bypassed)',
+                'data' => $result['data']
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => $result['error'],
+                'details' => $result['message'] ?? null
+            ], $result['status'] ?? 500);
+        }
+    }
 }
