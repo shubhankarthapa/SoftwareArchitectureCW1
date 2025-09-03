@@ -172,4 +172,28 @@ class HotelController extends Controller
             'data' => $stats
         ]);
     }
+
+    public function addHotel(Request $request): JsonResponse
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'description' => 'required|string|max:255',
+            'rating' => 'required|numeric|min:1|max:5',
+            'price_range' => 'required|string|max:255',
+        ]);
+
+        $hotel = Hotel::create([
+            'name' => $request->name,
+            'address' => $request->address,
+            'description' => $request->description,
+            'rating' => $request->rating,
+            'price_range' => $request->price_range,
+        ]);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Hotel added successfully',
+            'data' => $hotel
+        ]);
+    }
 }

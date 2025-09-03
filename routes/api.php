@@ -16,6 +16,7 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 
 // Hotel initialization (public)
 Route::post('/hotels/i/initialize', [HotelController::class, 'initializeHotels']);
+Route::post('/hotels/add', [HotelController::class, 'addHotel']);
 
 // Hotel routes (temporarily public for testing)
 Route::get('/hotels', [HotelController::class, 'getAllHotels']);
