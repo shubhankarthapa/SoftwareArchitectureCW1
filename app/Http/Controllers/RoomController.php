@@ -5,12 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\RoomType;
 use App\Models\Hotel;
+use App\Services\LoggingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
 class RoomController extends Controller
 {
+    protected $loggingService;
+
+    public function __construct(LoggingService $loggingService)
+    {
+        $this->loggingService = $loggingService;
+    }
+
     /**
      * Create a single room for a specific room type
      */
@@ -44,6 +52,9 @@ class RoomController extends Controller
             'floor' => $request->floor,
             'status' => $request->status ?? 'available',
         ]);
+
+        // Log room creation
+        $this->loggingService->logRoom('created', $room->toArray(), $request->user()?->id);
 
         return response()->json([
             'status' => 'success',
@@ -101,6 +112,8 @@ class RoomController extends Controller
                     ]);
 
                     $createdRooms[] = $room;
+                    // Log room creation
+                    $this->loggingService->logRoom('created', $room->toArray(), $request->user()?->id);
                 } catch (\Exception $e) {
                     $errors[] = "Failed to create room {$roomData['room_number']}: " . $e->getMessage();
                 }
@@ -135,6 +148,8 @@ class RoomController extends Controller
                     ]);
 
                     $createdRooms[] = $room;
+                    // Log room creation
+                    $this->loggingService->logRoom('created', $room->toArray(), $request->user()?->id);
                 } catch (\Exception $e) {
                     $errors[] = "Failed to create room {$roomNumber}: " . $e->getMessage();
                 }
@@ -169,6 +184,8 @@ class RoomController extends Controller
                         ]);
 
                         $createdRooms[] = $room;
+                        // Log room creation
+                        $this->loggingService->logRoom('created', $room->toArray(), $request->user()?->id);
                     } catch (\Exception $e) {
                         $errors[] = "Failed to create room {$roomNumber}: " . $e->getMessage();
                     }
@@ -265,6 +282,9 @@ class RoomController extends Controller
 
         $room->update($request->only(['room_number', 'floor', 'status', 'room_type_id']));
 
+        // Log room update
+        $this->loggingService->logRoom('updated', $room->toArray(), $request->user()?->id);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Room updated successfully',
@@ -275,7 +295,7 @@ class RoomController extends Controller
     /**
      * Delete a room
      */
-    public function deleteRoom($roomId): JsonResponse
+    public function deleteRoom(Request $request, $roomId): JsonResponse
     {
         $room = Room::find($roomId);
         
@@ -295,6 +315,9 @@ class RoomController extends Controller
             ], 400);
         }
 
+        // Log room deletion before deleting
+        $this->loggingService->logRoom('deleted', $room->toArray(), $request->user()?->id);
+        
         $room->delete();
 
         return response()->json([

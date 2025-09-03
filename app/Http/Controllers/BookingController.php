@@ -6,12 +6,20 @@ use App\Models\Booking;
 use App\Models\Hotel;
 use App\Models\Room;
 use App\Models\Wallet;
+use App\Services\LoggingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class BookingController extends Controller
 {
+    protected $loggingService;
+
+    public function __construct(LoggingService $loggingService)
+    {
+        $this->loggingService = $loggingService;
+    }
+
     public function createBooking(Request $request): JsonResponse
     {
         $request->validate([
@@ -59,7 +67,7 @@ class BookingController extends Controller
             $wallet->decrement('balance', $request->total_amount);
 
             // Create transaction record
-            $wallet->transactions()->create([
+            $transaction = $wallet->transactions()->create([
                 'type' => 'booking_payment',
                 'amount' => $request->total_amount,
                 'description' => "Hotel booking #{$booking->id}",
@@ -71,6 +79,10 @@ class BookingController extends Controller
             $booking->update(['payment_status' => 'paid']);
 
             DB::commit();
+
+            // Log booking creation and transaction
+            $this->loggingService->logBooking('created', $booking->toArray(), $user->id);
+            $this->loggingService->logTransaction('booking_payment', $transaction->toArray(), $user->id);
 
             return response()->json([
                 'booking' => $booking->load(['hotel', 'room', 'room.roomType']),
@@ -139,7 +151,7 @@ class BookingController extends Controller
                 $wallet->increment('balance', $booking->total_amount);
                 
                 // Create refund transaction
-                $wallet->transactions()->create([
+                $refundTransaction = $wallet->transactions()->create([
                     'type' => 'credit',
                     'amount' => $booking->total_amount,
                     'description' => "Refund for cancelled booking #{$booking->id}",
@@ -149,6 +161,12 @@ class BookingController extends Controller
             }
 
             DB::commit();
+
+            // Log booking cancellation and refund transaction
+            $this->loggingService->logBooking('cancelled', $booking->toArray(), $booking->user_id);
+            if (isset($refundTransaction)) {
+                $this->loggingService->logTransaction('refund', $refundTransaction->toArray(), $booking->user_id);
+            }
 
             return response()->json([
                 'message' => 'Booking cancelled successfully',

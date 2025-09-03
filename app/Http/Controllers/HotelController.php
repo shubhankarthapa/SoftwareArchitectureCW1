@@ -5,16 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\Hotel;
 use App\Models\Room;
 use App\Services\RoomTypeService;
+use App\Services\LoggingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class HotelController extends Controller
 {
     protected $roomTypeService;
+    protected $loggingService;
 
-    public function __construct(RoomTypeService $roomTypeService)
+    public function __construct(RoomTypeService $roomTypeService, LoggingService $loggingService)
     {
         $this->roomTypeService = $roomTypeService;
+        $this->loggingService = $loggingService;
     }
     public function getAllHotels(): JsonResponse
     {
@@ -190,6 +193,10 @@ class HotelController extends Controller
             'rating' => $request->rating,
             'price_range' => $request->price_range,
         ]);
+
+        // Log hotel creation
+        $this->loggingService->logHotel('created', $hotel->toArray(), $request->user()?->id);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Hotel added successfully',

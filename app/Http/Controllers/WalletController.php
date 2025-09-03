@@ -4,12 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Wallet;
 use App\Models\Transaction;
+use App\Services\LoggingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class WalletController extends Controller
 {
+    protected $loggingService;
+
+    public function __construct(LoggingService $loggingService)
+    {
+        $this->loggingService = $loggingService;
+    }
+
     public function getBalance(Request $request): JsonResponse
     {
         $wallet = Wallet::firstOrCreate(
@@ -41,7 +49,7 @@ class WalletController extends Controller
             $wallet->increment('balance', $request->amount);
 
             // Create transaction record
-            $wallet->transactions()->create([
+            $transaction = $wallet->transactions()->create([
                 'type' => 'deposit',
                 'amount' => $request->amount,
                 'description' => 'Wallet deposit',
@@ -50,6 +58,9 @@ class WalletController extends Controller
             ]);
 
             DB::commit();
+
+            // Log transaction
+            $this->loggingService->logTransaction('deposit', $transaction->toArray(), $request->user()->id);
 
             return response()->json([
                 'message' => 'Deposit successful',
@@ -81,7 +92,7 @@ class WalletController extends Controller
             $wallet->decrement('balance', $request->amount);
 
             // Create transaction record
-            $wallet->transactions()->create([
+            $transaction = $wallet->transactions()->create([
                 'type' => 'withdrawal',
                 'amount' => $request->amount,
                 'description' => 'Wallet withdrawal',
@@ -90,6 +101,9 @@ class WalletController extends Controller
             ]);
 
             DB::commit();
+
+            // Log transaction
+            $this->loggingService->logTransaction('withdrawal', $transaction->toArray(), $request->user()->id);
 
             return response()->json([
                 'message' => 'Withdrawal successful',
@@ -134,7 +148,7 @@ class WalletController extends Controller
             $toWallet->increment('balance', $request->amount);
 
             // Create transaction records
-            $fromWallet->transactions()->create([
+            $fromTransaction = $fromWallet->transactions()->create([
                 'type' => 'transfer',
                 'amount' => $request->amount,
                 'description' => "Transfer to user #{$request->to_user_id}",
@@ -142,7 +156,7 @@ class WalletController extends Controller
                 'status' => 'completed',
             ]);
 
-            $toWallet->transactions()->create([
+            $toTransaction = $toWallet->transactions()->create([
                 'type' => 'transfer',
                 'amount' => $request->amount,
                 'description' => "Transfer from user #{$request->user()->id}",
@@ -151,6 +165,10 @@ class WalletController extends Controller
             ]);
 
             DB::commit();
+
+            // Log transactions
+            $this->loggingService->logTransaction('transfer_out', $fromTransaction->toArray(), $request->user()->id);
+            $this->loggingService->logTransaction('transfer_in', $toTransaction->toArray(), $request->to_user_id);
 
             return response()->json([
                 'message' => 'Transfer successful',

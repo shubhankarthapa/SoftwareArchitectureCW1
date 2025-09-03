@@ -57,4 +57,8 @@ return [
         'url' => env('WALLET_SERVICE_URL', 'http://localhost:8004'),
     ],
 
+    'logs_service' => [
+        'url' => env('LOGS_SERVICE_URL', 'http://127.0.0.1:8001/api/logs'),
+    ],
+
 ];
