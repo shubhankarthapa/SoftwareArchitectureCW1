@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HotelController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\WalletController;
+use App\Http\Controllers\RoomTypeController;
 
 // Public routes
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -20,6 +21,13 @@ Route::get('/hotels/search', [HotelController::class, 'searchHotels']);
 Route::get('/hotels/{hotelId}', [HotelController::class, 'getHotel']);
 Route::get('/hotels/{hotelId}/rooms', [HotelController::class, 'getHotelRooms']);
 Route::get('/hotels/{hotelId}/available-rooms', [HotelController::class, 'getAvailableRooms']);
+Route::get('/hotels/{hotelId}/room-type-stats', [HotelController::class, 'getHotelRoomTypeStats']);
+
+// Room Type routes (public for now)
+Route::get('/room-types', [RoomTypeController::class, 'getAllRoomTypes']);
+Route::get('/room-types/search', [RoomTypeController::class, 'searchRoomTypes']);
+Route::get('/room-types/{roomTypeId}', [RoomTypeController::class, 'getRoomType']);
+Route::get('/hotels/{hotelId}/room-types', [RoomTypeController::class, 'getHotelRoomTypes']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -41,4 +49,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/wallet/withdraw', [WalletController::class, 'withdraw']);
     Route::post('/wallet/transfer', [WalletController::class, 'transfer']);
     Route::get('/wallet/transactions', [WalletController::class, 'getTransactions']);
+    
+    // Room Type management routes (protected)
+    Route::post('/hotels/{hotelId}/room-types', [RoomTypeController::class, 'createRoomType']);
+    Route::put('/room-types/{roomTypeId}', [RoomTypeController::class, 'updateRoomType']);
+    Route::delete('/room-types/{roomTypeId}', [RoomTypeController::class, 'deleteRoomType']);
 });
