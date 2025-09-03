@@ -4,11 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Hotel;
 use App\Models\Room;
+use App\Services\RoomTypeService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class HotelController extends Controller
 {
+    protected $roomTypeService;
+
+    public function __construct(RoomTypeService $roomTypeService)
+    {
+        $this->roomTypeService = $roomTypeService;
+    }
     public function getAllHotels(): JsonResponse
     {
         $hotels = Hotel::with(['roomTypes', 'rooms'])->get();
@@ -124,17 +131,45 @@ class HotelController extends Controller
             ],
         ];
 
+        $createdHotels = [];
         foreach ($hotels as $hotelData) {
-            Hotel::firstOrCreate(
+            $hotel = Hotel::firstOrCreate(
                 ['name' => $hotelData['name']],
                 $hotelData
             );
+            
+            // Initialize default room types for each hotel if they don't exist
+            if ($hotel->roomTypes()->count() === 0) {
+                $this->roomTypeService->initializeDefaultRoomTypes($hotel->id);
+            }
+            
+            $createdHotels[] = $hotel->load('roomTypes');
         }
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Hotels initialized successfully',
-            'data' => $hotels
+            'message' => 'Hotels initialized successfully with default room types',
+            'data' => $createdHotels
+        ]);
+    }
+
+    /**
+     * Get room type statistics for a hotel
+     */
+    public function getHotelRoomTypeStats($hotelId): JsonResponse
+    {
+        $hotel = Hotel::find($hotelId);
+        
+        if (!$hotel) {
+            return response()->json(['error' => 'Hotel not found'], 404);
+        }
+
+        $stats = $this->roomTypeService->getRoomTypeStats($hotelId);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Room type statistics fetched successfully',
+            'data' => $stats
         ]);
     }
 }
