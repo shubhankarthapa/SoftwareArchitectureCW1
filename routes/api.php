@@ -8,6 +8,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\UserController;
 
 // Public routes
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -34,6 +35,13 @@ Route::get('/hotels/{hotelId}/room-types', [RoomTypeController::class, 'getHotel
 Route::get('/rooms/{roomId}', [RoomController::class, 'getRoom']);
 Route::get('/room-types/{roomTypeId}/rooms', [RoomController::class, 'getRoomsByType']);
 Route::get('/room-types/{roomTypeId}/stats', [RoomController::class, 'getRoomTypeStats']);
+
+// User routes (public for now)
+Route::get('/users', [UserController::class, 'getAllUsers']);
+Route::get('/users/search', [UserController::class, 'searchUsers']);
+Route::get('/users/stats', [UserController::class, 'getUserStats']);
+Route::get('/users/{userId}', [UserController::class, 'getUser']);
+Route::get('/users/date-range', [UserController::class, 'getUsersByDateRange']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -66,4 +74,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/room-types/{roomTypeId}/rooms/bulk', [RoomController::class, 'bulkCreateRooms']);
     Route::put('/rooms/{roomId}', [RoomController::class, 'updateRoom']);
     Route::delete('/rooms/{roomId}', [RoomController::class, 'deleteRoom']);
+    
+    // User management routes (protected - admin only)
+    Route::put('/users/{userId}', [UserController::class, 'updateUser']);
+    Route::delete('/users/{userId}', [UserController::class, 'deleteUser']);
 });
