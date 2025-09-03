@@ -9,6 +9,7 @@ use App\Http\Controllers\WalletController;
 use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\LogsController;
 
 // Public routes
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -43,6 +44,14 @@ Route::get('/users/search', [UserController::class, 'searchUsers']);
 Route::get('/users/stats', [UserController::class, 'getUserStats']);
 Route::get('/users/{userId}', [UserController::class, 'getUser']);
 Route::get('/users/date-range', [UserController::class, 'getUsersByDateRange']);
+
+// Logs routes (public for now)
+Route::get('/logs', [LogsController::class, 'getAllLogs']);
+Route::get('/logs/paginated', [LogsController::class, 'getLogsPaginated']);
+Route::get('/logs/stats', [LogsController::class, 'getLogsStats']);
+Route::get('/logs/application/{applicationName}', [LogsController::class, 'getLogsByApplication']);
+Route::get('/logs/level/{level}', [LogsController::class, 'getLogsByLevel']);
+Route::get('/logs/user/{userId}', [LogsController::class, 'getLogsByUser']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -79,4 +88,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // User management routes (protected - admin only)
     Route::put('/users/{userId}', [UserController::class, 'updateUser']);
     Route::delete('/users/{userId}', [UserController::class, 'deleteUser']);
+    
+    // Protected logs routes
+    Route::get('/my-logs', [LogsController::class, 'getMyLogs']);
 });

@@ -146,4 +146,101 @@ class LoggingService
     {
         return $this->sendLog('warning', $message, $context, $source, $userId);
     }
+
+    /**
+     * Fetch logs from the second Laravel app
+     */
+    public function fetchLogs(array $filters = []): array
+    {
+        try {
+            $queryParams = [];
+            
+            // Add filters as query parameters
+            if (!empty($filters)) {
+                $queryParams = array_merge($queryParams, $filters);
+            }
+
+            $response = Http::timeout(10)->get($this->logsApiUrl, $queryParams);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return [
+                    'success' => true,
+                    'data' => $data,
+                    'status' => $response->status()
+                ];
+            } else {
+                Log::warning('Failed to fetch logs from external service', [
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                    'filters' => $filters
+                ]);
+                
+                return [
+                    'success' => false,
+                    'error' => 'Failed to fetch logs',
+                    'status' => $response->status(),
+                    'message' => $response->body()
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception while fetching logs from external service', [
+                'error' => $e->getMessage(),
+                'filters' => $filters
+            ]);
+            
+            return [
+                'success' => false,
+                'error' => 'Exception occurred while fetching logs',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Fetch logs with pagination
+     */
+    public function fetchLogsPaginated(int $page = 1, int $perPage = 15, array $filters = []): array
+    {
+        $filters['page'] = $page;
+        $filters['per_page'] = $perPage;
+        
+        return $this->fetchLogs($filters);
+    }
+
+    /**
+     * Fetch logs by application name
+     */
+    public function fetchLogsByApplication(string $applicationName, array $additionalFilters = []): array
+    {
+        $filters = array_merge($additionalFilters, [
+            'application_name' => $applicationName
+        ]);
+        
+        return $this->fetchLogs($filters);
+    }
+
+    /**
+     * Fetch logs by level
+     */
+    public function fetchLogsByLevel(string $level, array $additionalFilters = []): array
+    {
+        $filters = array_merge($additionalFilters, [
+            'level' => $level
+        ]);
+        
+        return $this->fetchLogs($filters);
+    }
+
+    /**
+     * Fetch logs by user ID
+     */
+    public function fetchLogsByUser(string $userId, array $additionalFilters = []): array
+    {
+        $filters = array_merge($additionalFilters, [
+            'user_id' => $userId
+        ]);
+        
+        return $this->fetchLogs($filters);
+    }
 }
